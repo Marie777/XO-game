@@ -1,6 +1,7 @@
 var socketIO = require('socket.io');
 var game = require('./game');
 var _ = require("lodash");
+var {GameData} = require('./db');
 
 function startXOApp(Q, games, port) {
     var io = socketIO(port);
@@ -18,15 +19,17 @@ function startXOApp(Q, games, port) {
             Q.remove(socket.id);
 
             if(socket.playingRoom) {
-                var gameData = games.get(socket.playingRoom);
-                if(gameData) {
-                    var gameState = gameData.gameState;
-                    var player = _.indexOf(gameData.players, socket.id);
+                GameData.findOne({ room: socket.playingRoom }, function(err, gameData) {
+                    if(!err && gameData) {
+                        var gameState = gameData.gameState;
+                        var player = _.indexOf(gameData.players, socket.id);
 
-                    gameState.winner = player ? 0 : 1;
-                    io.to(gameData.players[gameState.winner]).emit('game-state', gameState);
-                    games.remove(socket.playingRoom);
-                }
+                        gameState.winner = player ? 0 : 1;
+                        io.to(gameData.players[gameState.winner]).emit('game-state', gameState);
+
+                        gameData.remove();
+                    }
+                });
             }
         });
 
@@ -43,19 +46,30 @@ function startXOApp(Q, games, port) {
         socket.on('move', function(data) {
             var room = data.room;
             var move = data.move;
-            var gameData = games.get(room);
 
-            if(gameData) {
-                var player = _.indexOf(gameData.players, socket.id);
+            GameData.findOne({room: room}, function(err, gameData) {
+                if(!err) {
+                    var player = _.indexOf(gameData.players, socket.id);
 
-                if(player !== -1) {
-                    var nextState = game.move(gameData.gameState, move, player);
-                    io.to(room).emit('game-state', nextState);
-                    if(nextState.winner !== null) {
-                        games.remove(room);
+                    if(player !== -1) {
+                        var nextState = game.move(gameData.gameState, move, player);
+                        if(nextState.winner !== null) {
+                            gameData.remove(function(err) {
+                                if(!err) {
+                                    io.to(room).emit('game-state', nextState);
+                                }
+                            });
+                        } else {
+                            gameData.gameState = nextState;
+                            gameData.save(function(err) {
+                                if(!err) {
+                                    io.to(room).emit('game-state', nextState);
+                                }
+                            });
+                        }
                     }
                 }
-            }
+            });
         });
 
         console.log('New connection!');
@@ -96,13 +110,19 @@ function startXOApp(Q, games, port) {
      */
     function startGame(room, player1, player2) {
         var gameState = game.createGameState();
+        var gameData = new GameData({
+            room: room,
+            gameState: gameState,
+            players: [player1.id, player2.id]
+        });
 
-        player1.emit('start', {game: gameState, room: room, player: 0});
-        player2.emit('start', {game: gameState, room: room, player: 1});
-
-        games.set(room, {gameState: gameState, players: [player1.id, player2.id]});
-
-        console.log("Start a game in room " + room);
+        gameData.save(function(err) {
+            if(!err) {
+                player1.emit('start', {game: gameState, room: room, player: 0});
+                player2.emit('start', {game: gameState, room: room, player: 1});
+                console.log("Start a game in room " + room);
+            }
+        });
     }
 }
 
