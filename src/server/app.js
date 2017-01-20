@@ -15,7 +15,7 @@ function startXOApp(Q, games, port) {
          * If he was playing tell second player that he won the game.
          */
         socket.on('disconnect', function() {
-            Q.remove(socket);
+            Q.remove(socket.id);
 
             if(socket.playingRoom) {
                 var gameData = games.get(socket.playingRoom);
@@ -34,7 +34,7 @@ function startXOApp(Q, games, port) {
          * When user is ready to play add hit to waiting queue.
          */
         socket.on('ready-to-play', function() {
-            Q.enqueue(socket);
+            Q.enqueue(socket.id);
         });
 
         /**
@@ -68,9 +68,13 @@ function startXOApp(Q, games, port) {
         var qCount = Q.count();
         console.log("Q size: ", qCount);
         if(qCount >= 2) {
-            var player1 = Q.dequeue();
-            var player2 = Q.dequeue();
-            var playingRoom = player1.id + "_" + player2.id;
+            var playerId1 = Q.dequeue();
+            var playerId2 = Q.dequeue();
+
+            var player1 = io.sockets.connected[playerId1];
+            var player2 = io.sockets.connected[playerId2];
+
+            var playingRoom = playerId1 + "_" + playerId2;
             player1.playingRoom = playingRoom;
             player2.playingRoom = playingRoom;
 
