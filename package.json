@@ -4,7 +4,7 @@
   "description": "XO online game project.",
   "main": "src/server/server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node src/server/server.js"
   },
   "author": "Reut Levy, Nadir Miralimov",
   "license": "ISC",
