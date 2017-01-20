@@ -1,5 +1,7 @@
 var express = require('express');
 var path = require('path');
+var { startXOApp } = require('./app');
+var {Queue, Map} = require('../common/utils');
 
 var app = express();
 
@@ -14,6 +16,11 @@ app.use('/static', express.static('src/client/public/static'));
 app.get('*', function (req, res) {
     res.sendFile(path.join(__dirname, '../client/public/index.html'));
 });
+
+var Q = new Queue();
+var games = new Map();
+
+startXOApp(Q, games, 81);
 
 /**
  * Listen on 3000 port.
