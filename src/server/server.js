@@ -20,7 +20,7 @@ app.get('*', function (req, res) {
 var Q = new Queue();
 var games = new Map();
 
-startXOApp(Q, games, 81);
+startXOApp(Q, games, 3001);
 
 /**
  * Listen on 3000 port.
