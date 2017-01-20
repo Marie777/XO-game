@@ -9,6 +9,7 @@
   "author": "Reut Levy, Nadir Miralimov",
   "license": "ISC",
   "dependencies": {
-    "express": "^4.14.0"
+    "express": "^4.14.0",
+    "lodash": "^4.17.4"
   }
 }
