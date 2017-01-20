@@ -21,10 +21,10 @@ function startXOApp(Q, games, port) {
                 var gameData = games.get(socket.playingRoom);
                 if(gameData) {
                     var gameState = gameData.gameState;
-                    var player = _.indexOf(_.map(gameData.players, 'id'), socket.id);
+                    var player = _.indexOf(gameData.players, socket.id);
 
                     gameState.winner = player ? 0 : 1;
-                    gameData.players[gameState.winner].emit('game-state', gameState);
+                    io.to(gameData.players[gameState.winner]).emit('game-state', gameState);
                     games.remove(socket.playingRoom);
                 }
             }
@@ -46,7 +46,7 @@ function startXOApp(Q, games, port) {
             var gameData = games.get(room);
 
             if(gameData) {
-                var player = _.indexOf(_.map(gameData.players, 'id'), socket.id);
+                var player = _.indexOf(gameData.players, socket.id);
 
                 if(player !== -1) {
                     var nextState = game.move(gameData.gameState, move, player);
@@ -96,7 +96,7 @@ function startXOApp(Q, games, port) {
         player1.emit('start', {game: gameState, room: room, player: 0});
         player2.emit('start', {game: gameState, room: room, player: 1});
 
-        games.set(room, {gameState: gameState, players: [player1, player2]});
+        games.set(room, {gameState: gameState, players: [player1.id, player2.id]});
 
         console.log("Start a game in room " + room);
     }
