@@ -1,0 +1,11 @@
+{
+  "name": "xo",
+  "version": "1.0.0",
+  "description": "XO online game project.",
+  "main": "src/server/server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Reut Levy, Nadir Miralimov",
+  "license": "ISC"
+}
